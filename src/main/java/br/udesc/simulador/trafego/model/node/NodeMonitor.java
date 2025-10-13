@@ -1,6 +1,9 @@
 package br.udesc.simulador.trafego.model.node;
 
+import br.udesc.simulador.trafego.model.GlobalConstants;
 import br.udesc.simulador.trafego.model.observer.ObserverNode;
+import br.udesc.simulador.trafego.model.piece.PieceModel;
+import br.udesc.simulador.trafego.model.singleton.MeshRepository;
 import br.udesc.simulador.trafego.model.thread.Car;
 
 import java.util.ArrayList;
@@ -18,56 +21,23 @@ public class NodeMonitor extends AbstractNode {
     }
 
     @Override
-    public synchronized void moveCar(Car car) throws InterruptedException {
-        AbstractNode nextNode = null;
-        AbstractNode currentNode = car.getCurrentNode();
-        AbstractNode firstNode = currentNode;
-        List<AbstractNode> crossingNodes = new ArrayList<>();
+    public void moveCar(Car car) throws InterruptedException {
+        AbstractNode nextNode = getNextNode(car);
 
         try{
-            nextNode = getNextNode(car);
             if(nextNode == null) {
-                // Fim da pista
                 car.setInterrupted(true);
                 getObserver().notifyEndCar(getRow(), getColumn(), car);
                 this.release();
             } else if (!nextNode.isCrossing()) {
                 moveOne(car, nextNode);
             } else {
-                boolean foundDestination = false;
-                boolean isTraversalOK = true;
+                List<AbstractNode> crossingNodes = getCrossingRoute(nextNode);
 
-                if (nextNode.tryNext()) {
-                    crossingNodes.add(nextNode);
-                    currentNode = nextNode;
-                    while (!foundDestination) {
-                        nextNode = getNextNodeSimple(currentNode);
-                        if (nextNode.isCrossing()){
-                            if (nextNode.tryNext()) {
-                                crossingNodes.add(nextNode);
-                                currentNode = nextNode;
-                            }else {
-                                isTraversalOK = false;
-                            }
-                        } else {
-                            if (nextNode.tryNext()) {
-                                crossingNodes.add(nextNode);
-                            }else {
-                                isTraversalOK = false;
-                            }
-                            foundDestination = true;
-                        }
-                    }
-                } else {
-                    isTraversalOK = false;
-                }
+                boolean isTraversalOK = tryAcquireAllLocks(crossingNodes);
 
                 if (isTraversalOK) {
-                    processCrossingMove(car, firstNode, crossingNodes);
-                } else {
-                    for (AbstractNode nodeToRelease : crossingNodes) {
-                        nodeToRelease.release();
-                    }
+                    processCrossingMove(car, this, crossingNodes);
                 }
             }
 
@@ -77,22 +47,69 @@ public class NodeMonitor extends AbstractNode {
         }
     }
 
-    private void processCrossingMove(Car car, AbstractNode firstNode, List<AbstractNode> crossingNodes) throws InterruptedException {
+    private boolean tryAcquireAllLocks(List<AbstractNode> crossingNodes) throws InterruptedException {
         for (AbstractNode node : crossingNodes) {
-            car.setCurrentNode(node);
-            firstNode.getObserver().notifyMoveCar(firstNode.getRow(), firstNode.getColumn(), node.getRow(), node.getColumn());
-            firstNode.release();
-            firstNode = node;
+            if (!node.tryNext()) {
+                for (AbstractNode acquiredNode : crossingNodes) {
+                    if (acquiredNode == node) break;
+                    acquiredNode.release();
+                }
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void processCrossingMove(Car car, AbstractNode firstNode, List<AbstractNode> crossingNodes) throws InterruptedException {
+        AbstractNode currentNode = firstNode;
+
+        for (AbstractNode nextNode : crossingNodes) {
+
+            int direction = determineDirection(currentNode, nextNode);
+            car.setCurrentNode(nextNode);
+            car.setDirection(direction);
+
+            updatePieceDirection(nextNode.getRow(), nextNode.getColumn(), direction);
+
+            currentNode.getObserver().notifyMoveCar(currentNode.getRow(), currentNode.getColumn(), nextNode.getRow(), nextNode.getColumn());
+            currentNode.release(); // Libera o lock do nó anterior
+
+            currentNode = nextNode;
             car.sleepThread();
+        }
+
+        if (currentNode != null && !currentNode.isCrossing()) {
+            currentNode.release();
         }
     }
 
     private void moveOne(Car car, AbstractNode nextNode) throws InterruptedException {
         if (nextNode.tryNext()) {
+
+            int direction = determineDirection(this, nextNode);
             car.setCurrentNode(nextNode);
+            car.setDirection(direction);
+
+            updatePieceDirection(nextNode.getRow(), nextNode.getColumn(), direction);
+
             this.getObserver().notifyMoveCar(this.getRow(), this.getColumn(), nextNode.getRow(), nextNode.getColumn());
             this.release();
             car.sleepThread();
+        }
+    }
+
+    private int determineDirection(AbstractNode currentNode, AbstractNode nextNode) {
+        if (nextNode.getRow() < currentNode.getRow()) return GlobalConstants.UP;
+        if (nextNode.getRow() > currentNode.getRow()) return GlobalConstants.DOWN;
+        if (nextNode.getColumn() > currentNode.getColumn()) return GlobalConstants.RIGHT;
+        if (nextNode.getColumn() < currentNode.getColumn()) return GlobalConstants.LEFT;
+        return 0;
+    }
+
+    private void updatePieceDirection(int row, int column, int direction) {
+        PieceModel piece = MeshRepository.getInstance().getPieces()[row][column];
+        if (piece != null) {
+            piece.setDirection(direction);
         }
     }
 
@@ -117,25 +134,45 @@ public class NodeMonitor extends AbstractNode {
         return nextNode;
     }
 
+    @Override
+    public List<AbstractNode> getCrossingRoute(AbstractNode initialNode) {
+        List<AbstractNode> route = new ArrayList<>();
+        AbstractNode currentNode = initialNode;
+        boolean foundDestination = false;
+
+        while (!foundDestination) {
+            route.add(currentNode);
+
+            AbstractNode nextNode = getNextNodeSimple(currentNode);
+
+            if (nextNode == null) {
+                break;
+            } else if (nextNode.isCrossing()) {
+                currentNode = nextNode;
+            } else {
+                route.add(nextNode);
+                foundDestination = true;
+            }
+        }
+        return route;
+    }
+
     public AbstractNode getNextNodeSimple(AbstractNode initialNode) {
         AbstractNode currentNode = initialNode;
-        AbstractNode nextNode = null;
+        List<AbstractNode> possibleNextNodes = new ArrayList<>();
 
-        AbstractNode[] directions = {
-                currentNode.getNextNodeLeft(),
-                currentNode.getNextNodeDown(),
-                currentNode.getNextNodeRight(),
-                currentNode.getNextNodeUp()
-        };
+        if (currentNode.canMoveLeft()) possibleNextNodes.add(currentNode.getNextNodeLeft());
+        if (currentNode.canMoveDown()) possibleNextNodes.add(currentNode.getNextNodeDown());
+        if (currentNode.canMoveRight()) possibleNextNodes.add(currentNode.getNextNodeRight());
+        if (currentNode.canMoveUp()) possibleNextNodes.add(currentNode.getNextNodeUp());
 
-        Random random = new Random();
-
-        while (nextNode == null) {
-            int randomIndex = random.nextInt(directions.length);
-            nextNode = directions[randomIndex];
+        if (possibleNextNodes.isEmpty()) {
+            return null;
         }
 
-        return nextNode;
+        Random random = new Random();
+        int randomIndex = random.nextInt(possibleNextNodes.size());
+        return possibleNextNodes.get(randomIndex);
     }
 
     @Override

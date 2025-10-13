@@ -60,7 +60,7 @@ public class MeshRepository {
         this.factory = factory;
     }
 
-    public AbstractNode[][] createNodeMesh(ObserverNode observer) {
+    public AbstractNode[][] createAndLinkNodeMesh(ObserverNode observer) {
         AbstractNode[][] nodeMesh = new AbstractNode[roadMesh.length][roadMesh[0].length];
         NodeFactory nodeFactory = this.getFactory();
 
@@ -68,9 +68,9 @@ public class MeshRepository {
             for (int j = 0; j < roadMesh[0].length; j++) {
                 int typeRoad = roadMesh[i][j];
                 AbstractNode node = null;
-                if (roadMesh[i][j] >= 1 && roadMesh[i][j] <= 4) {
+                if (typeRoad >= 1 && typeRoad <= 4) {
                     node = nodeFactory.createNode(i, j, typeRoad, observer);
-                } else if (roadMesh[i][j] >= 5 && roadMesh[i][j] <= 12) {
+                } else if (typeRoad >= 5 && typeRoad <= 12) {
                     node = nodeFactory.createCrossNode(i, j, typeRoad, observer);
                 }
                 nodeMesh[i][j] = node;
@@ -85,42 +85,42 @@ public class MeshRepository {
                 switch (typeRoad) {
                     case GlobalConstants.UP:
                     case GlobalConstants.CROSSING_UP: {
-                        setMoveUp(row, column, row-1, column);
+                        setNextNodeUp(row, column, row-1, column);
                         break;
                     }
                     case GlobalConstants.RIGHT:
                     case GlobalConstants.CROSSING_RIGHT: {
-                        setMoveRight(row, column, row, column+1);
+                        setNextNodeRight(row, column, row, column+1);
                         break;
                     }
                     case GlobalConstants.DOWN:
                     case GlobalConstants.CROSSING_DOWN: {
-                        setMoveDown(row, column, row+1, column);
+                        setNextNodeDown(row, column, row+1, column);
                         break;
                     }
                     case GlobalConstants.LEFT:
                     case GlobalConstants.CROSSING_LEFT: {
-                        setMoveLeft(row, column, row, column-1);
+                        setNextNodeLeft(row, column, row, column-1);
                         break;
                     }
                     case GlobalConstants.CROSSING_DOWN_LEFT: {
-                        setMoveDown(row, column, row+1, column);
-                        setMoveLeft(row, column, row, column-1);
+                        setNextNodeDown(row, column, row+1, column);
+                        setNextNodeLeft(row, column, row, column-1);
                         break;
                     }
                     case GlobalConstants.CROSSING_RIGHT_DOWN: {
-                        setMoveRight(row, column, row, column+1);
-                        setMoveDown(row, column, row+1, column);
+                        setNextNodeRight(row, column, row, column+1);
+                        setNextNodeDown(row, column, row+1, column);
                         break;
                     }
                     case GlobalConstants.CROSSING_UP_LEFT: {
-                        setMoveUp(row, column, row-1, column);
-                        setMoveLeft(row, column, row, column-1);
+                        setNextNodeUp(row, column, row-1, column);
+                        setNextNodeLeft(row, column, row, column-1);
                         break;
                     }
                     case GlobalConstants.CROSSING_UP_RIGHT: {
-                        setMoveUp(row, column, row-1, column);
-                        setMoveRight(row, column, row, column+1);
+                        setNextNodeUp(row, column, row-1, column);
+                        setNextNodeRight(row, column, row, column+1);
                         break;
                     }
                 }
@@ -145,25 +145,25 @@ public class MeshRepository {
         return row < roadMesh.length-1;
     }
 
-    private void setMoveRight(int row, int column, int nextRow, int nextColumn) {
+    private void setNextNodeRight(int row, int column, int nextRow, int nextColumn) {
         if(canMoveRight(column)) {
             nodeMesh[row][column].setMoveRight(nodeMesh[nextRow][nextColumn]);
         }
     }
 
-    private void setMoveLeft(int row, int column, int nextRow, int nextColumn) {
+    private void setNextNodeLeft(int row, int column, int nextRow, int nextColumn) {
         if(canMoveLeft(column)) {
             nodeMesh[row][column].setMoveLeft(nodeMesh[nextRow][nextColumn]);
         }
     }
 
-    private void setMoveUp(int row, int column, int nextRow, int nextColumn) {
+    private void setNextNodeUp(int row, int column, int nextRow, int nextColumn) {
         if(canMoveUp(row)) {
             nodeMesh[row][column].setMoveUp(nodeMesh[nextRow][nextColumn]);
         }
     }
 
-    private void setMoveDown(int row, int column, int nextRow, int nextColumn) {
+    private void setNextNodeDown(int row, int column, int nextRow, int nextColumn) {
         if(canMoveDown(row)) {
             nodeMesh[row][column].setMoveDown(nodeMesh[nextRow][nextColumn]);
         }
@@ -187,42 +187,18 @@ public class MeshRepository {
 
     private PieceModel createPiece(int type) {
         switch (type) {
-            case GlobalConstants.UP: {
-                return new RoadUpPiece(type);
-            }
-            case GlobalConstants.RIGHT: {
-                return new RoadRightPiece(type);
-            }
-            case GlobalConstants.DOWN: {
-                return new RoadDownPiece(type);
-            }
-            case GlobalConstants.LEFT: {
-                return new RoadLeftPiece(type);
-            }
-            case GlobalConstants.CROSSING_DOWN: {
-                return new CrossingDownPiece(type);
-            }
-            case GlobalConstants.CROSSING_UP: {
-                return new CrossingUpPiece(type);
-            }
-            case GlobalConstants.CROSSING_LEFT: {
-                return new CrossingLeftPiece(type);
-            }
-            case GlobalConstants.CROSSING_RIGHT: {
-                return new CrossingRightPiece(type);
-            }
-            case GlobalConstants.CROSSING_DOWN_LEFT: {
-                return new CrossingDownLeftPiece(type);
-            }
-            case GlobalConstants.CROSSING_RIGHT_DOWN: {
-                return new CrossingRightDownPiece(type);
-            }
-            case GlobalConstants.CROSSING_UP_LEFT: {
-                return new CrossingUpLeftPiece(type);
-            }
-            case GlobalConstants.CROSSING_UP_RIGHT: {
-                return new CrossingUpRightPiece(type);
-            }
+            case GlobalConstants.UP: return new RoadUpPiece(type);
+            case GlobalConstants.RIGHT: return new RoadRightPiece(type);
+            case GlobalConstants.DOWN: return new RoadDownPiece(type);
+            case GlobalConstants.LEFT: return new RoadLeftPiece(type);
+            case GlobalConstants.CROSSING_DOWN: return new CrossingDownPiece(type);
+            case GlobalConstants.CROSSING_UP: return new CrossingUpPiece(type);
+            case GlobalConstants.CROSSING_LEFT: return new CrossingLeftPiece(type);
+            case GlobalConstants.CROSSING_RIGHT: return new CrossingRightPiece(type);
+            case GlobalConstants.CROSSING_DOWN_LEFT: return new CrossingDownLeftPiece(type);
+            case GlobalConstants.CROSSING_RIGHT_DOWN: return new CrossingRightDownPiece(type);
+            case GlobalConstants.CROSSING_UP_LEFT: return new CrossingUpLeftPiece(type);
+            case GlobalConstants.CROSSING_UP_RIGHT: return new CrossingUpRightPiece(type);
             default:
                 return null;
         }

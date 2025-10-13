@@ -3,6 +3,8 @@ package br.udesc.simulador.trafego.model.node;
 import br.udesc.simulador.trafego.model.observer.ObserverNode;
 import br.udesc.simulador.trafego.model.thread.Car;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -16,7 +18,7 @@ public class NodeCrossSemaphore extends AbstractNode {
     }
 
     @Override
-    public synchronized void moveCar(Car car) throws InterruptedException {
+    public void moveCar(Car car) throws InterruptedException {
         throw new InterruptedException();
     }
 
@@ -26,8 +28,15 @@ public class NodeCrossSemaphore extends AbstractNode {
     }
 
     @Override
+    public List<AbstractNode> getCrossingRoute(AbstractNode initialNode) {
+        List<AbstractNode> route = new ArrayList<>();
+        route.add(initialNode);
+        return route;
+    }
+
+    @Override
     public boolean tryNext() throws InterruptedException {
-        return crossingSemaphore.tryAcquire(new Random().nextInt(2001 - 500) + 500, TimeUnit.MILLISECONDS); // Alterado de 'semaphore'
+        return crossingSemaphore.tryAcquire(new Random().nextInt(2001 - 500) + 500, TimeUnit.MILLISECONDS);
     }
 
     @Override

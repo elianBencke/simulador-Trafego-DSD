@@ -2,6 +2,7 @@ package br.udesc.simulador.trafego.model.node;
 
 import br.udesc.simulador.trafego.model.observer.ObserverNode;
 import br.udesc.simulador.trafego.model.thread.Car;
+import java.util.List;
 
 public abstract class AbstractNode {
     private AbstractNode nextNodeUp;
@@ -96,6 +97,9 @@ public abstract class AbstractNode {
 
     public abstract void moveCar(Car car) throws InterruptedException;
     public abstract AbstractNode getNextNode(Car car);
+
+    public abstract List<AbstractNode> getCrossingRoute(AbstractNode initialNode);
+
     public abstract boolean tryNext() throws InterruptedException;
     public abstract void block() throws InterruptedException;
     public abstract void release();

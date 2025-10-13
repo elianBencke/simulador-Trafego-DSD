@@ -9,12 +9,14 @@ public class Car extends Thread {
     private boolean isInterrupted;
     private int sleepTime;
     private AbstractNode currentNode;
+    private int direction;
 
     public Car(AbstractNode currentNode) {
         this.isFirstMove = true;
         this.isInterrupted = false;
         this.sleepTime = new Random().nextInt(2001 - 500) + 500;
         this.currentNode = currentNode;
+        this.direction = 0;
     }
 
     @Override
@@ -31,10 +33,11 @@ public class Car extends Thread {
                     currentNode.moveCar(this);
                 }
             }
-
             currentNode.getObserver().notifyEndCar(currentNode.getRow(), currentNode.getColumn(), this);
+            currentNode.release();
             Thread.currentThread().interrupt();
         } catch (InterruptedException e) {
+            currentNode.release();
             currentNode.getObserver().notifyEndCar(currentNode.getRow(), currentNode.getColumn(), this);
             Thread.currentThread().interrupt();
         }
@@ -42,6 +45,7 @@ public class Car extends Thread {
 
     public void markAsInterrupted() {
         isInterrupted = true;
+        Thread.currentThread().interrupt();
     }
 
     public void markFirstMoveDone() {
@@ -82,5 +86,13 @@ public class Car extends Thread {
 
     public void setCurrentNode(AbstractNode currentNode) {
         this.currentNode = currentNode;
+    }
+
+    public int getDirection() {
+        return direction;
+    }
+
+    public void setDirection(int direction) {
+        this.direction = direction;
     }
 }

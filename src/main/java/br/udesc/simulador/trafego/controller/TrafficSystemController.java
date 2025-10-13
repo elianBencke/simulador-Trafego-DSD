@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import br.udesc.simulador.trafego.model.GlobalConstants;
+import br.udesc.simulador.trafego.model.factory.NodeFactory;
 import br.udesc.simulador.trafego.model.node.AbstractNode;
 import br.udesc.simulador.trafego.model.observer.ObserverNode;
 import br.udesc.simulador.trafego.model.piece.PieceModel;
@@ -21,12 +22,18 @@ public class TrafficSystemController implements AbstractTableDataProvider, Obser
     private List<Car> cars;
     private int maxThreads = 0;
     private int insertionInterval = 1000;
+    private boolean isInsertionActive = false;
+    private NodeFactory factory;
+
+    private CarGenerator initialCarGenerator = null;
 
     public TrafficSystemController() {
         super();
         interruptClick = false;
+        this.factory = MeshRepository.getInstance().getFactory();
         this.roadMesh = MeshRepository.getInstance().getRoadMesh();
-        pieces = MeshRepository.getInstance().getPieces();
+        this.pieces = MeshRepository.getInstance().getPieces();
+        this.cars = new ArrayList<>();
     }
 
     @Override
@@ -40,40 +47,42 @@ public class TrafficSystemController implements AbstractTableDataProvider, Obser
     }
 
     @Override
-    public PieceModel getValueAt(int rowIndex, int columnIndex) {
+    public Object getValueAt(int rowIndex, int columnIndex) {
         return pieces[rowIndex][columnIndex];
     }
 
-    public boolean hasElementAt(int row, int column, int[][] state) {
-        if (state[row][column] == 0) {
-            return false;
-        } else {
-            return true;
-        }
-    }
-
-    public List<Car> getCars(){
+    public List<Car> getCars() {
         return cars;
     }
 
+    public boolean isInsertionActive() {
+        return isInsertionActive;
+    }
+
     public void startSimulation(String maxThreadsStr, String intervalStr) {
+        if (this.isInsertionActive) {
+            return;
+        }
+
         interruptClick = false;
-        nodeMesh = MeshRepository.getInstance().createNodeMesh(this);
+
+        this.nodeMesh = MeshRepository.getInstance().createAndLinkNodeMesh(this);
         mapEntranceNodes();
-        cars = new ArrayList<>();
 
         if (intervalStr.matches("^\\d+$")) {
             this.insertionInterval = Integer.parseInt(intervalStr);
         } else {
-            this.insertionInterval = 1000; // Default
+            this.insertionInterval = 1000;
         }
 
         if(maxThreadsStr.matches("^\\d+$")){
             int numThreads = Integer.parseInt(maxThreadsStr);
             this.maxThreads = numThreads;
 
-            CarGenerator generator = new CarGenerator(numThreads, cars, numThreads, this.insertionInterval);
-            generator.start();
+            this.isInsertionActive = true;
+
+            initialCarGenerator = new CarGenerator(numThreads, cars, numThreads, this.insertionInterval);
+            initialCarGenerator.start();
         }
     }
 
@@ -82,29 +91,51 @@ public class TrafficSystemController implements AbstractTableDataProvider, Obser
         generator.start();
     }
 
-    public void stopAllCars(){
+    public synchronized void stopInsertion() {
+        this.isInsertionActive = false;
+        if (initialCarGenerator != null && initialCarGenerator.isAlive()) {
+            initialCarGenerator.interrupt();
+        }
+    }
+
+    public synchronized void stopAllCars(){
         interruptClick = true;
-        for (Car car: cars) {
+        this.isInsertionActive = false;
+
+        if (initialCarGenerator != null && initialCarGenerator.isAlive()) {
+            initialCarGenerator.interrupt();
+        }
+
+        List<Car> carsToStop = new ArrayList<>(cars);
+        for (Car car: carsToStop) {
+            if (car.getCurrentNode() != null) {
+                car.getCurrentNode().getObserver().notifyEndCar(car.getCurrentNode().getRow(), car.getCurrentNode().getColumn(), car);
+                car.getCurrentNode().release();
+            }
             car.markAsInterrupted();
         }
-        cars.clear();
     }
 
     private void mapEntranceNodes() {
-        for (int column = 0; column < roadMesh[0].length; column++) {
+        MeshRepository.getInstance().getEntranceNodes().clear();
+        int rows = roadMesh.length;
+        int columns = roadMesh[0].length;
+
+        for (int column = 0; column < columns; column++) {
             if (roadMesh[0][column] == GlobalConstants.DOWN) {
                 MeshRepository.getInstance().addEntranceNode(nodeMesh[0][column]);
             }
-            if (roadMesh[roadMesh.length - 1][column] == GlobalConstants.UP) {
-                MeshRepository.getInstance().addEntranceNode(nodeMesh[roadMesh.length - 1][column]);
+            if (roadMesh[rows - 1][column] == GlobalConstants.UP) {
+                MeshRepository.getInstance().addEntranceNode(nodeMesh[rows - 1][column]);
             }
         }
-        for (int row = 0; row < roadMesh.length - 1; row++) {
+
+        for (int row = 0; row < rows; row++) {
             if (roadMesh[row][0] == GlobalConstants.RIGHT) {
                 MeshRepository.getInstance().addEntranceNode(nodeMesh[row][0]);
             }
-            if (roadMesh[row][roadMesh[0].length - 1] == GlobalConstants.LEFT) {
-                MeshRepository.getInstance().addEntranceNode(nodeMesh[row][roadMesh[0].length - 1]);
+            if (roadMesh[row][columns - 1] == GlobalConstants.LEFT) {
+                MeshRepository.getInstance().addEntranceNode(nodeMesh[row][columns - 1]);
             }
         }
     }
@@ -126,9 +157,15 @@ public class TrafficSystemController implements AbstractTableDataProvider, Obser
     @Override
     public void notifyEndCar(int line, int column, Car car) {
         observerNode.notifyEndCar(line, column, car);
-        if (!interruptClick) {
+
+        synchronized (cars) {
             cars.remove(car);
-            generateCar();
+
+            if (!interruptClick) {
+                if (isInsertionActive && cars.size() < maxThreads) {
+                    generateCar();
+                }
+            }
         }
     }
 }

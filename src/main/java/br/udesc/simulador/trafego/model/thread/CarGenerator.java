@@ -19,25 +19,27 @@ public class CarGenerator extends Thread{
         this.insertionInterval = insertionInterval;
     }
 
-    private void generateCar(){
-        int position = new Random().nextInt(MeshRepository.getInstance().getEntranceNodes().size());
-        AbstractNode chosenNode = MeshRepository.getInstance().getEntranceNodes().get(position);
-        Car car = new Car(chosenNode);
-        carList.add(car);
-        car.start();
+    private void generateCar() {
+        synchronized (carList) {
+            if (carList.size() < maxThreads) {
+                int position = new Random().nextInt(MeshRepository.getInstance().getEntranceNodes().size());
+                AbstractNode chosenNode = MeshRepository.getInstance().getEntranceNodes().get(position);
+                Car car = new Car(chosenNode);
+                carList.add(car);
+                car.start();
+            }
+        }
     }
 
     @Override
     public void run() {
         try {
-            if(carList.size() < maxThreads) {
-                for(int i= 0; i < quantity; i++) {
-                    Thread.sleep(insertionInterval);
-                    generateCar();
-                }
+            for (int i = 0; i < quantity; i++) {
+                Thread.sleep(insertionInterval);
+                generateCar();
             }
         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+
         } finally {
             Thread.currentThread().interrupt();
         }

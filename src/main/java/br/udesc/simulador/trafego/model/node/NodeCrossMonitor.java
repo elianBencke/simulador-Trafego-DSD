@@ -16,13 +16,20 @@ public class NodeCrossMonitor extends AbstractNode{
     }
 
     @Override
-    public synchronized void moveCar(Car car) throws InterruptedException {
+    public void moveCar(Car car) throws InterruptedException {
         throw new InterruptedException();
     }
 
     @Override
     public AbstractNode getNextNode(Car car) {
         return null;
+    }
+
+    @Override
+    public List<AbstractNode> getCrossingRoute(AbstractNode initialNode) {
+        List<AbstractNode> route = new ArrayList<>();
+        route.add(initialNode);
+        return route;
     }
 
     @Override
