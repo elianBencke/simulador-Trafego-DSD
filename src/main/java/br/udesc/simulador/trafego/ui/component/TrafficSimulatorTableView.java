@@ -30,7 +30,7 @@ public class TrafficSimulatorTableView extends JTable{
 
     private void defineProperties() {
         this.setOpaque(false);
-        this.setBackground(new Color (92, 142, 203));
+        this.setBackground(new Color (220, 220, 220));
         Color gridColor = new Color(42, 94, 157);
         setRowHeight(GlobalConstants.GRID_HEIGHT);
         this.setBorder(BorderFactory.createLineBorder(gridColor));

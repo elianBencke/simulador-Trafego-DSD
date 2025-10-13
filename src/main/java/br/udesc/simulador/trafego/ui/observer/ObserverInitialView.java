@@ -5,5 +5,5 @@ public interface ObserverInitialView {
     void activateInitialButton();
     void updatePathText(String path);
     void notifyErrorFile();
-    void navigateNextView();
+    void navigateNextView(String maxThreads, String insertionInterval);
 }

@@ -50,7 +50,6 @@ public class NodeSemaphore extends AbstractNode{
     private boolean tryAcquireAllLocks(List<AbstractNode> crossingNodes) throws InterruptedException {
         for (AbstractNode node : crossingNodes) {
             if (!node.tryNext()) {
-                // FALHA: Libera os locks já adquiridos na rota ANTES de retornar false
                 for (AbstractNode acquiredNode : crossingNodes) {
                     if (acquiredNode == node) break;
                     acquiredNode.release();
@@ -73,7 +72,7 @@ public class NodeSemaphore extends AbstractNode{
             updatePieceDirection(nextNode.getRow(), nextNode.getColumn(), direction);
 
             currentNode.getObserver().notifyMoveCar(currentNode.getRow(), currentNode.getColumn(), nextNode.getRow(), nextNode.getColumn());
-            currentNode.release(); // Libera o lock do nó anterior
+            currentNode.release();
 
             currentNode = nextNode;
             car.sleepThread();
@@ -176,10 +175,10 @@ public class NodeSemaphore extends AbstractNode{
         return possibleNextNodes.get(randomIndex);
     }
 
-
     @Override
     public boolean tryNext() throws InterruptedException {
-        return nodeSemaphore.tryAcquire(1000, TimeUnit.MILLISECONDS);
+        nodeSemaphore.acquire();
+        return true;
     }
 
     @Override

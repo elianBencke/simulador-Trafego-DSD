@@ -72,7 +72,7 @@ public class NodeMonitor extends AbstractNode {
             updatePieceDirection(nextNode.getRow(), nextNode.getColumn(), direction);
 
             currentNode.getObserver().notifyMoveCar(currentNode.getRow(), currentNode.getColumn(), nextNode.getRow(), nextNode.getColumn());
-            currentNode.release(); // Libera o lock do nó anterior
+            currentNode.release();
 
             currentNode = nextNode;
             car.sleepThread();
@@ -177,7 +177,8 @@ public class NodeMonitor extends AbstractNode {
 
     @Override
     public boolean tryNext() throws InterruptedException {
-        return nodeLock.tryLock(new Random().nextInt(2001 - 500) + 500, TimeUnit.MILLISECONDS);
+        nodeLock.lock();
+        return true;
     }
 
     @Override
