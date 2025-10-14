@@ -45,28 +45,24 @@ public class InitialView extends JFrame implements ObserverInitialView {
         GridBagLayout layout = new GridBagLayout();
         GridBagConstraints constraints = new GridBagConstraints();
 
-        // --- ESTILOS ---
         Color monitorColor = new Color(0, 100, 200);
         Color mutexColor = new Color(200, 100, 0);
-        // --- FIM ESTILOS ---
 
-        // Título Principal
-        JLabel lblTitle = new JLabel("Choose the road mesh file");
+        JLabel lblTitle = new JLabel("Escolha o arquivo");
         lblTitle.setFont(new Font("Arial", Font.BOLD, 16));
         lblTitle.setForeground(new Color(50, 50, 50));
 
 
-        // CAMPO DE BUSCA DE ARQUIVO (Path)
         txtFilePath = new JTextField();
-        txtFilePath.setText("Select a road mesh file");
+        txtFilePath.setText("Escolha o arquivo");
         txtFilePath.setPreferredSize(new Dimension(310, 26));
         txtFilePath.setMinimumSize(new Dimension(310, 26));
         txtFilePath.setEnabled(false);
 
-        btnBrowse = new JButton("Browse");
+        btnBrowse = new JButton("Buscar");
         btnBrowse.setPreferredSize(new Dimension(120, 26));
         btnBrowse.setMinimumSize(new Dimension(120, 26));
-        btnBrowse.setBackground(new Color(220, 220, 220)); // Estilização
+        btnBrowse.setBackground(new Color(220, 220, 220));
         btnBrowse.setOpaque(true);
         btnBrowse.setBorderPainted(false);
 
@@ -81,13 +77,12 @@ public class InitialView extends JFrame implements ObserverInitialView {
         constraints.insets = new Insets(0, 10, 0, 0);
         panSearchLine.add(btnBrowse, constraints);
 
-        // --- COMPONENTES DE CONFIGURAÇÃO ---
-        JLabel lblMaxThreads = new JLabel("Max Threads:");
+        JLabel lblMaxThreads = new JLabel("Máximo de Threads:");
         lblMaxThreads.setFont(new Font("Arial", Font.PLAIN, 12));
         txtMaxThreads = new JTextField("10");
         txtMaxThreads.setPreferredSize(new Dimension(80, 26));
 
-        JLabel lblInsertionInterval = new JLabel("Insertion Interval (ms):");
+        JLabel lblInsertionInterval = new JLabel("Intervalo (ms):");
         lblInsertionInterval.setFont(new Font("Arial", Font.PLAIN, 12));
         txtInsertionInterval = new JTextField("1000");
         txtInsertionInterval.setPreferredSize(new Dimension(80, 26));
@@ -108,28 +103,24 @@ public class InitialView extends JFrame implements ObserverInitialView {
         constraints.gridx = 3; constraints.insets = new Insets(5, 0, 5, 0);
         panConfigLine.add(txtInsertionInterval, constraints);
 
-        // Borda para agrupar parâmetros
         panConfigLine.setBorder(
                 BorderFactory.createEmptyBorder(10, 10, 10, 10)
         );
-        // --- FIM COMPONENTES DE CONFIGURAÇÃO ---
 
-
-        // BOTÕES DE START
-        btnStartMutex = new JButton("Start Mutex");
+        btnStartMutex = new JButton("Semaforo");
         btnStartMutex.setPreferredSize(new Dimension(120, 30));
         btnStartMutex.setMinimumSize(new Dimension(120, 30));
         btnStartMutex.setEnabled(false);
-        btnStartMutex.setBackground(mutexColor); // Estilização Mutex
+        btnStartMutex.setBackground(mutexColor);
         btnStartMutex.setForeground(Color.WHITE);
         btnStartMutex.setOpaque(true);
         btnStartMutex.setBorderPainted(false);
 
-        btnStartMonitor = new JButton("Start Monitor");
+        btnStartMonitor = new JButton("Monitor");
         btnStartMonitor.setPreferredSize(new Dimension(120, 30));
         btnStartMonitor.setMinimumSize(new Dimension(120, 30));
         btnStartMonitor.setEnabled(false);
-        btnStartMonitor.setBackground(monitorColor); // Estilização Monitor
+        btnStartMonitor.setBackground(monitorColor);
         btnStartMonitor.setForeground(Color.WHITE);
         btnStartMonitor.setOpaque(true);
         btnStartMonitor.setBorderPainted(false);
@@ -138,24 +129,19 @@ public class InitialView extends JFrame implements ObserverInitialView {
         fileChooser = new JFileChooser();
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 
-        // --- LAYOUT PRINCIPAL ---
         JPanel panLayout = new JPanel();
         panLayout.setLayout(layout);
-        panLayout.setBackground(new Color(245, 245, 245)); // Fundo suave
+        panLayout.setBackground(new Color(245, 245, 245));
 
-        // Título
         constraints.gridx = 0; constraints.gridy = 0; constraints.insets = new Insets(10, 0, 0, 0);
         panLayout.add(lblTitle, constraints);
 
-        // Linha de Busca (Path)
         constraints.gridy = 1; constraints.insets = new Insets(15, 0, 0, 0);
         panLayout.add(panSearchLine, constraints);
 
-        // Linha de Configuração (Threads/Intervalo)
         constraints.gridy = 2; constraints.insets = new Insets(10, 0, 0, 0);
         panLayout.add(panConfigLine, constraints);
 
-        // Botões de Start
         JPanel panButtons = new JPanel();
         panButtons.setLayout(layout);
         panButtons.setOpaque(false);
@@ -168,11 +154,8 @@ public class InitialView extends JFrame implements ObserverInitialView {
 
         constraints.gridx = 0; constraints.gridy = 3; constraints.insets = new Insets(20, 0, 20, 0);
         panLayout.add(panButtons, constraints);
-        // --- FIM LAYOUT PRINCIPAL ---
 
-
-        setTitle("Choose the road mesh");
-        // setVisible(true); é chamado pela TrafficSimulatorApplication.java
+        setTitle("Escolha a malha");
         setSize(600, 300);
         setResizable(false);
         setLocationRelativeTo(null);
@@ -184,7 +167,7 @@ public class InitialView extends JFrame implements ObserverInitialView {
         btnBrowse.addActionListener(click -> {
             int i= fileChooser.showSaveDialog(null);
             if (i==1){
-                txtFilePath.setText("Select a road mesh file");
+                txtFilePath.setText("Escolha o arquivo");
                 btnStartMutex.setEnabled(false);
                 btnStartMonitor.setEnabled(false);
             } else {
@@ -217,7 +200,7 @@ public class InitialView extends JFrame implements ObserverInitialView {
 
     @Override
     public void notifyErrorFile() {
-        JOptionPane.showMessageDialog(null, "The selected file does not have the adequate standard for a road mesh",
+        JOptionPane.showMessageDialog(null, "O arquivo selecionado não é suportado",
                 "File Error", JOptionPane.ERROR_MESSAGE);
         btnStartMutex.setEnabled(false);
         btnStartMonitor.setEnabled(false);

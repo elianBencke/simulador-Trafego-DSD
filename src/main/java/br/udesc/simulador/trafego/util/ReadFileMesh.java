@@ -10,16 +10,22 @@ public class ReadFileMesh {
     public static int[][] generateRoadMesh(File file) throws Exception {
         List<String> fileLines = Files.readAllLines(Path.of(file.getPath()));
 
-        int meshRows = Integer.parseInt(fileLines.get(0));
-        int meshColumns = Integer.parseInt(fileLines.get(1));
+        int meshRows = Integer.parseInt(fileLines.get(0).trim());
+        int meshColumns = Integer.parseInt(fileLines.get(1).trim());
         int[][] roadMesh = new int[meshRows][meshColumns];
 
         fileLines = fileLines.subList(2, fileLines.size());
 
         for (int row = 0; row < fileLines.size(); row++) {
-            String[] columns = fileLines.get(row).split("\t");
+            String[] columns = fileLines.get(row).trim().split("\\s+");
+
             for (int column = 0; column < columns.length; column++) {
-                roadMesh[row][column] = Integer.parseInt(columns[column]);
+                if (columns[column].isEmpty()) {
+                    continue;
+                }
+                if (column < meshColumns) {
+                    roadMesh[row][column] = Integer.parseInt(columns[column]);
+                }
             }
         }
 

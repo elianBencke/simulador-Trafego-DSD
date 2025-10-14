@@ -62,7 +62,7 @@ public class TrafficSimulatorView extends JFrame implements ObserverNode {
     }
 
     private void setProperties() {
-        setTitle("Traffic Simulator");
+        setTitle("Simulador");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         getContentPane().setBackground(new Color(245, 245, 245));
         setPreferredSize(new Dimension(GlobalConstants.SCREEN_WIDTH, GlobalConstants.SCREEN_HEIGHT));
@@ -76,26 +76,26 @@ public class TrafficSimulatorView extends JFrame implements ObserverNode {
         GridBagConstraints constraints = new GridBagConstraints();
         Font controlFont = new Font("Arial", Font.BOLD, 12);
         Font valueFont = new Font("Arial", Font.BOLD, 16);
-        JLabel lblTitleMaxThreads = new JLabel("Max Threads: " + maxThreads);
+        JLabel lblTitleMaxThreads = new JLabel("Máximo de Threads: " + maxThreads);
         lblTitleMaxThreads.setPreferredSize(new Dimension(GlobalConstants.SCREEN_WIDTH/6, GlobalConstants.GRID_COLUMN_WIDTH));
         lblTitleMaxThreads.setFont(controlFont);
 
-        JLabel lblTitleInterval = new JLabel("Interval (ms): " + insertionInterval);
+        JLabel lblTitleInterval = new JLabel("Intervalo (ms): " + insertionInterval);
         lblTitleInterval.setPreferredSize(new Dimension(GlobalConstants.SCREEN_WIDTH/6, GlobalConstants.GRID_COLUMN_WIDTH));
         lblTitleInterval.setFont(controlFont);
 
-        JLabel lblTitleCurrentThread = new JLabel("Running Threads");
+        JLabel lblTitleCurrentThread = new JLabel("Threads rodando");
         lblTitleCurrentThread.setPreferredSize(new Dimension(GlobalConstants.SCREEN_WIDTH/6, GlobalConstants.GRID_COLUMN_WIDTH));
         lblTitleCurrentThread.setFont(controlFont);
 
-        btnStart = new JButton("START");
+        btnStart = new JButton("COMEÇAR");
         btnStart.setPreferredSize(new Dimension(GlobalConstants.SCREEN_WIDTH/6, GlobalConstants.GRID_COLUMN_WIDTH));
         btnStart.setBackground(new Color(0, 150, 0));
         btnStart.setForeground(Color.WHITE);
         btnStart.setOpaque(true);
         btnStart.setBorderPainted(false);
 
-        btnStopInsertion = new JButton("STOP INSERTION");
+        btnStopInsertion = new JButton("PARAR INSERÇÃO");
         btnStopInsertion.setPreferredSize(new Dimension(GlobalConstants.SCREEN_WIDTH/6, GlobalConstants.GRID_COLUMN_WIDTH));
         btnStopInsertion.setBackground(new Color(255, 165, 0));
         btnStopInsertion.setForeground(Color.BLACK);
@@ -103,7 +103,7 @@ public class TrafficSimulatorView extends JFrame implements ObserverNode {
         btnStopInsertion.setBorderPainted(false);
         btnStopInsertion.setEnabled(false);
 
-        btnStopAll = new JButton("STOP SIMULATION");
+        btnStopAll = new JButton("PARAR SIMULAÇÃO");
         btnStopAll.setPreferredSize(new Dimension(GlobalConstants.SCREEN_WIDTH/6, GlobalConstants.GRID_COLUMN_WIDTH));
         btnStopAll.setBackground(new Color(200, 0, 0));
         btnStopAll.setForeground(Color.WHITE);
@@ -125,7 +125,7 @@ public class TrafficSimulatorView extends JFrame implements ObserverNode {
                 BorderFactory.createCompoundBorder(
                         BorderFactory.createTitledBorder(
                                 BorderFactory.createLineBorder(new Color(180, 180, 180)),
-                                "Simulation Control",
+                                "Controle de simulação",
                                 TitledBorder.LEFT,
                                 TitledBorder.TOP,
                                 new Font("SansSerif", Font.BOLD, 14)
