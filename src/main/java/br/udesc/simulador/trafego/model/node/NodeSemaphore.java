@@ -8,9 +8,10 @@ import br.udesc.simulador.trafego.model.thread.Car;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import java.util.Random;
+import java.util.stream.Collectors;
 
 public class NodeSemaphore extends AbstractNode{
 
@@ -32,12 +33,17 @@ public class NodeSemaphore extends AbstractNode{
             } else if (!nextNode.isCrossing()) {
                 moveOne(car, nextNode);
             } else {
-                List<AbstractNode> crossingNodes = getCrossingRoute(nextNode);
+
+                int chosenDirection = chooseCrossingExit(nextNode);
+                car.setDirection(chosenDirection);
+
+                List<AbstractNode> crossingNodes = getCrossingRoute(nextNode, car);
 
                 boolean isTraversalOK = tryAcquireAllLocks(crossingNodes);
 
                 if (isTraversalOK) {
                     processCrossingMove(car, this, crossingNodes);
+                } else {
                 }
             }
 
@@ -47,8 +53,41 @@ public class NodeSemaphore extends AbstractNode{
         }
     }
 
+    public List<AbstractNode> getCrossingRoute(AbstractNode initialNode, Car car) {
+
+        List<AbstractNode> route = new ArrayList<>();
+        int chosenDirection = car.getDirection();
+
+        route.add(initialNode);
+
+        AbstractNode nextNode = null;
+        switch (chosenDirection) {
+            case GlobalConstants.UP: nextNode = initialNode.getNextNodeUp(); break;
+            case GlobalConstants.DOWN: nextNode = initialNode.getNextNodeDown(); break;
+            case GlobalConstants.LEFT: nextNode = initialNode.getNextNodeLeft(); break;
+            case GlobalConstants.RIGHT: nextNode = initialNode.getNextNodeRight(); break;
+        }
+
+        if (nextNode != null) {
+            route.add(nextNode);
+        } else {
+        }
+
+        String routeDetail = route.stream()
+                .map(n -> "(" + n.getRow() + "," + n.getColumn() + ")")
+                .collect(Collectors.joining(" -> "));
+        return route;
+    }
+
+    @Override
+    public List<AbstractNode> getCrossingRoute(AbstractNode initialNode) {
+        return new ArrayList<>();
+    }
+
     private boolean tryAcquireAllLocks(List<AbstractNode> crossingNodes) throws InterruptedException {
+
         for (AbstractNode node : crossingNodes) {
+
             if (!node.tryNext()) {
                 for (AbstractNode acquiredNode : crossingNodes) {
                     if (acquiredNode == node) break;
@@ -72,6 +111,7 @@ public class NodeSemaphore extends AbstractNode{
             updatePieceDirection(nextNode.getRow(), nextNode.getColumn(), direction);
 
             currentNode.getObserver().notifyMoveCar(currentNode.getRow(), currentNode.getColumn(), nextNode.getRow(), nextNode.getColumn());
+
             currentNode.release();
 
             currentNode = nextNode;
@@ -80,6 +120,35 @@ public class NodeSemaphore extends AbstractNode{
 
         if (currentNode != null && !currentNode.isCrossing()) {
             currentNode.release();
+        }
+    }
+
+    private int chooseCrossingExit(AbstractNode initialCrossingNode) {
+        List<Integer> possibleExits = new ArrayList<>();
+
+        if (initialCrossingNode.canMoveUp() && !initialCrossingNode.getNextNodeUp().isCrossing())
+            possibleExits.add(GlobalConstants.UP);
+        if (initialCrossingNode.canMoveDown() && !initialCrossingNode.getNextNodeDown().isCrossing())
+            possibleExits.add(GlobalConstants.DOWN);
+        if (initialCrossingNode.canMoveRight() && !initialCrossingNode.getNextNodeRight().isCrossing())
+            possibleExits.add(GlobalConstants.RIGHT);
+        if (initialCrossingNode.canMoveLeft() && !initialCrossingNode.getNextNodeLeft().isCrossing())
+            possibleExits.add(GlobalConstants.LEFT);
+
+        if (possibleExits.isEmpty()) {
+            return GlobalConstants.UP;
+        }
+
+        return possibleExits.get(new Random().nextInt(possibleExits.size()));
+    }
+
+    private String directionToString(int direction) {
+        switch (direction) {
+            case GlobalConstants.UP: return "UP";
+            case GlobalConstants.DOWN: return "DOWN";
+            case GlobalConstants.LEFT: return "LEFT";
+            case GlobalConstants.RIGHT: return "RIGHT";
+            default: return "UNKNOWN";
         }
     }
 
@@ -95,6 +164,8 @@ public class NodeSemaphore extends AbstractNode{
             this.getObserver().notifyMoveCar(this.getRow(), this.getColumn(), nextNode.getRow(), nextNode.getColumn());
             this.release();
             car.sleepThread();
+        } else {
+            this.release();
         }
     }
 
@@ -134,37 +205,14 @@ public class NodeSemaphore extends AbstractNode{
         return nextNode;
     }
 
-    @Override
-    public List<AbstractNode> getCrossingRoute(AbstractNode initialNode) {
-        List<AbstractNode> route = new ArrayList<>();
-        AbstractNode currentNode = initialNode;
-        boolean foundDestination = false;
-
-        while (!foundDestination) {
-            route.add(currentNode);
-
-            AbstractNode nextNode = getNextNodeSimple(currentNode);
-
-            if (nextNode == null) {
-                break;
-            } else if (nextNode.isCrossing()) {
-                currentNode = nextNode;
-            } else {
-                route.add(nextNode);
-                foundDestination = true;
-            }
-        }
-        return route;
-    }
-
     public AbstractNode getNextNodeSimple(AbstractNode initialNode) {
-        AbstractNode currentNode = initialNode;
+
         List<AbstractNode> possibleNextNodes = new ArrayList<>();
 
-        if (currentNode.canMoveLeft()) possibleNextNodes.add(currentNode.getNextNodeLeft());
-        if (currentNode.canMoveDown()) possibleNextNodes.add(currentNode.getNextNodeDown());
-        if (currentNode.canMoveRight()) possibleNextNodes.add(currentNode.getNextNodeRight());
-        if (currentNode.canMoveUp()) possibleNextNodes.add(currentNode.getNextNodeUp());
+        if (initialNode.canMoveLeft()) possibleNextNodes.add(initialNode.getNextNodeLeft());
+        if (initialNode.canMoveDown()) possibleNextNodes.add(initialNode.getNextNodeDown());
+        if (initialNode.canMoveRight()) possibleNextNodes.add(initialNode.getNextNodeRight());
+        if (initialNode.canMoveUp()) possibleNextNodes.add(initialNode.getNextNodeUp());
 
         if (possibleNextNodes.isEmpty()) {
             return null;
@@ -172,6 +220,7 @@ public class NodeSemaphore extends AbstractNode{
 
         Random random = new Random();
         int randomIndex = random.nextInt(possibleNextNodes.size());
+
         return possibleNextNodes.get(randomIndex);
     }
 

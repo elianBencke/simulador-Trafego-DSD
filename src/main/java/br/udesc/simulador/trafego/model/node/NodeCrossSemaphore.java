@@ -36,7 +36,16 @@ public class NodeCrossSemaphore extends AbstractNode {
 
     @Override
     public boolean tryNext() throws InterruptedException {
-        return crossingSemaphore.tryAcquire(new Random().nextInt(2001 - 500) + 500, TimeUnit.MILLISECONDS);
+        int minTimeout = 500;
+        int maxTimeout = 2000;
+        int timeout = new Random().nextInt(maxTimeout - minTimeout) + minTimeout;
+
+        boolean acquired = crossingSemaphore.tryAcquire(timeout, TimeUnit.MILLISECONDS);
+
+        if (acquired) {
+        } else {
+        }
+        return acquired;
     }
 
     @Override
@@ -48,5 +57,4 @@ public class NodeCrossSemaphore extends AbstractNode {
     public void release() {
         crossingSemaphore.release();
     }
-
 }

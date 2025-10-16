@@ -10,8 +10,12 @@ public class ReadFileMesh {
     public static int[][] generateRoadMesh(File file) throws Exception {
         List<String> fileLines = Files.readAllLines(Path.of(file.getPath()));
 
-        int meshRows = Integer.parseInt(fileLines.get(0));
-        int meshColumns = Integer.parseInt(fileLines.get(1));
+        String rowStr = fileLines.get(0).trim();
+        int meshRows = Integer.parseInt(rowStr);
+
+        String colStr = fileLines.get(1).trim();
+        int meshColumns = Integer.parseInt(colStr);
+
         int[][] roadMesh = new int[meshRows][meshColumns];
 
         fileLines = fileLines.subList(2, fileLines.size());
@@ -19,7 +23,15 @@ public class ReadFileMesh {
         for (int row = 0; row < fileLines.size(); row++) {
             String[] columns = fileLines.get(row).split("\t");
             for (int column = 0; column < columns.length; column++) {
-                roadMesh[row][column] = Integer.parseInt(columns[column]);
+                String cellValue = columns[column].trim();
+
+                if (!cellValue.isEmpty()) {
+                    try {
+                        roadMesh[row][column] = Integer.parseInt(cellValue);
+                    } catch (NumberFormatException e) {
+                        throw new Exception("O valor '" + cellValue + "' não é um inteiro válido na malha.", e);
+                    }
+                }
             }
         }
 
