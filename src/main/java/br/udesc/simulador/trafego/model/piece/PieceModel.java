@@ -8,7 +8,7 @@ import br.udesc.simulador.trafego.util.ResizedImageIconFactory;
 public abstract class PieceModel {
     private int type;
     private boolean hasCar;
-    private int direction;
+    private volatile int direction;
 
     public PieceModel(int type) {
         this.type = type;

@@ -198,49 +198,58 @@ public class TrafficSimulatorView extends JFrame implements ObserverNode {
     }
 
     public synchronized void updateThreadCount() {
-        lblCurrentThreadCount.setText(String.valueOf(controller.getCars().size()));
-        lblCurrentThreadCount.repaint();
+        String count = String.valueOf(controller.getCars().size());
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            lblCurrentThreadCount.setText(count);
+            lblCurrentThreadCount.repaint();
+        });
     }
 
     @Override
     public void notifyStartCar(int line, int column) {
-        TableModel model = board.getModel();
-        PieceModel pieceAtual = (PieceModel) model.getValueAt(line, column);
-        pieceAtual.setHasCar(true);
-        model.setValueAt(pieceAtual, line, column);
-        controller.pieces[line][column] = pieceAtual;
-        board.repaint();
-        updateThreadCount();
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            TableModel model = board.getModel();
+            PieceModel pieceAtual = (PieceModel) model.getValueAt(line, column);
+            pieceAtual.setHasCar(true);
+            model.setValueAt(pieceAtual, line, column);
+            controller.pieces[line][column] = pieceAtual;
+            board.repaint();
+            updateThreadCount();
+        });
     }
 
     @Override
     public void notifyMoveCar(int pastLine, int pastColumn, int newLine, int newColumn) {
-        TableModel model = board.getModel();
-        PieceModel pieceAtual = (PieceModel) model.getValueAt(pastLine, pastColumn);
-        PieceModel pieceNext = (PieceModel) model.getValueAt(newLine, newColumn);
-        pieceAtual.setHasCar(false);
-        pieceNext.setHasCar(true);
-        model.setValueAt(pieceAtual, pastLine, pastColumn);
-        model.setValueAt(pieceNext, newLine, newColumn);
-        controller.pieces[pastLine][pastColumn] = pieceAtual;
-        controller.pieces[newLine][newColumn] = pieceNext;
-        board.repaint();
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            TableModel model = board.getModel();
+            PieceModel pieceAtual = (PieceModel) model.getValueAt(pastLine, pastColumn);
+            PieceModel pieceNext = (PieceModel) model.getValueAt(newLine, newColumn);
+            pieceAtual.setHasCar(false);
+            pieceNext.setHasCar(true);
+            model.setValueAt(pieceAtual, pastLine, pastColumn);
+            model.setValueAt(pieceNext, newLine, newColumn);
+            controller.pieces[pastLine][pastColumn] = pieceAtual;
+            controller.pieces[newLine][newColumn] = pieceNext;
+            board.repaint();
+        });
     }
 
     @Override
     public void notifyEndCar(int line, int column, Car car) {
-        TableModel model = board.getModel();
-        PieceModel pieceAtual = (PieceModel) model.getValueAt(line, column);
-        pieceAtual.setHasCar(false);
-        model.setValueAt(pieceAtual, line, column);
-        controller.pieces[line][column] = pieceAtual;
-        board.repaint();
-        updateThreadCount();
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            TableModel model = board.getModel();
+            PieceModel pieceAtual = (PieceModel) model.getValueAt(line, column);
+            pieceAtual.setHasCar(false);
+            model.setValueAt(pieceAtual, line, column);
+            controller.pieces[line][column] = pieceAtual;
+            board.repaint();
+            updateThreadCount();
 
-        if (!controller.isInsertionActive() && controller.getCars().isEmpty()) {
-            btnStopAll.setEnabled(false);
-            btnStopInsertion.setEnabled(false);
-            btnStart.setEnabled(true);
-        }
+            if (!controller.isInsertionActive() && controller.getCars().isEmpty()) {
+                btnStopAll.setEnabled(false);
+                btnStopInsertion.setEnabled(false);
+                btnStart.setEnabled(true);
+            }
+        });
     }
 }

@@ -44,6 +44,7 @@ public class NodeSemaphore extends AbstractNode{
                 if (isTraversalOK) {
                     processCrossingMove(car, this, crossingNodes);
                 } else {
+                    car.sleepThread();
                 }
             }
 
@@ -56,32 +57,54 @@ public class NodeSemaphore extends AbstractNode{
     public List<AbstractNode> getCrossingRoute(AbstractNode initialNode, Car car) {
 
         List<AbstractNode> route = new ArrayList<>();
+        AbstractNode currentNode = initialNode;
+        boolean foundDestination = false;
         int chosenDirection = car.getDirection();
 
-        route.add(initialNode);
+        while (!foundDestination) {
+            route.add(currentNode);
 
-        AbstractNode nextNode = null;
-        switch (chosenDirection) {
-            case GlobalConstants.UP: nextNode = initialNode.getNextNodeUp(); break;
-            case GlobalConstants.DOWN: nextNode = initialNode.getNextNodeDown(); break;
-            case GlobalConstants.LEFT: nextNode = initialNode.getNextNodeLeft(); break;
-            case GlobalConstants.RIGHT: nextNode = initialNode.getNextNodeRight(); break;
+            AbstractNode nextNode = null;
+            switch (chosenDirection) {
+                case GlobalConstants.UP: nextNode = currentNode.getNextNodeUp(); break;
+                case GlobalConstants.DOWN: nextNode = currentNode.getNextNodeDown(); break;
+                case GlobalConstants.LEFT: nextNode = currentNode.getNextNodeLeft(); break;
+                case GlobalConstants.RIGHT: nextNode = currentNode.getNextNodeRight(); break;
+            }
+
+            if (nextNode == null) {
+                break;
+            } else if (nextNode.isCrossing()) {
+                currentNode = nextNode;
+            } else {
+                route.add(nextNode);
+                foundDestination = true;
+            }
         }
-
-        if (nextNode != null) {
-            route.add(nextNode);
-        } else {
-        }
-
-        String routeDetail = route.stream()
-                .map(n -> "(" + n.getRow() + "," + n.getColumn() + ")")
-                .collect(Collectors.joining(" -> "));
         return route;
     }
 
     @Override
     public List<AbstractNode> getCrossingRoute(AbstractNode initialNode) {
-        return new ArrayList<>();
+        List<AbstractNode> route = new ArrayList<>();
+        AbstractNode currentNode = initialNode;
+        boolean foundDestination = false;
+
+        while (!foundDestination) {
+            route.add(currentNode);
+
+            AbstractNode nextNode = getNextNodeSimple(currentNode);
+
+            if (nextNode == null) {
+                break;
+            } else if (nextNode.isCrossing()) {
+                currentNode = nextNode;
+            } else {
+                route.add(nextNode);
+                foundDestination = true;
+            }
+        }
+        return route;
     }
 
     private boolean tryAcquireAllLocks(List<AbstractNode> crossingNodes) throws InterruptedException {
@@ -118,9 +141,6 @@ public class NodeSemaphore extends AbstractNode{
             car.sleepThread();
         }
 
-        if (currentNode != null && !currentNode.isCrossing()) {
-            currentNode.release();
-        }
     }
 
     private int chooseCrossingExit(AbstractNode initialCrossingNode) {
@@ -165,7 +185,7 @@ public class NodeSemaphore extends AbstractNode{
             this.release();
             car.sleepThread();
         } else {
-            this.release();
+            car.sleepThread();
         }
     }
 

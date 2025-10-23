@@ -108,10 +108,11 @@ public class TrafficSystemController implements AbstractTableDataProvider, Obser
 
         List<Car> carsToStop = new ArrayList<>(cars);
         for (Car car: carsToStop) {
+            /*
             if (car.getCurrentNode() != null) {
                 car.getCurrentNode().getObserver().notifyEndCar(car.getCurrentNode().getRow(), car.getCurrentNode().getColumn(), car);
-                car.getCurrentNode().release();
             }
+            */
             car.markAsInterrupted();
         }
     }

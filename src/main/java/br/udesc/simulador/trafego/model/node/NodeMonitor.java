@@ -38,6 +38,8 @@ public class NodeMonitor extends AbstractNode {
 
                 if (isTraversalOK) {
                     processCrossingMove(car, this, crossingNodes);
+                } else {
+                    car.sleepThread();
                 }
             }
 
@@ -77,10 +79,6 @@ public class NodeMonitor extends AbstractNode {
             currentNode = nextNode;
             car.sleepThread();
         }
-
-        if (currentNode != null && !currentNode.isCrossing()) {
-            currentNode.release();
-        }
     }
 
     private void moveOne(Car car, AbstractNode nextNode) throws InterruptedException {
@@ -94,6 +92,8 @@ public class NodeMonitor extends AbstractNode {
 
             this.getObserver().notifyMoveCar(this.getRow(), this.getColumn(), nextNode.getRow(), nextNode.getColumn());
             this.release();
+            car.sleepThread();
+        } else {
             car.sleepThread();
         }
     }
